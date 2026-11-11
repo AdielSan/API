@@ -70,3 +70,10 @@ app.post('/api/alunos', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
+
+// No final do server.js (mantendo o app.listen para desenvolvimento local)
+app.listen(PORT, () => {
+  console.log(`Servidor a rodar na porta ${PORT}`);
+});
+
+module.exports = app;

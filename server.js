@@ -5,8 +5,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middlewares
-app.use(cors()); // Libera acesso para requisições frontend/mobile
+app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Banco de dados em memória (lista inicial de alunos)
 let alunos = [
@@ -47,9 +48,20 @@ app.get('/api/alunos/:id', (req, res) => {
   res.status(200).json(aluno);
 });
 
-// POST /api/alunos - Adicionar novo aluno
+// POST /api/alunos - Adicionar novo aluno (com tratamento flexível para Vercel/Serverless)
 app.post('/api/alunos', (req, res) => {
-  const { nome, curso } = req.body;
+  let body = req.body;
+
+  // Trata o corpo caso chegue como string em requisições serverless
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body);
+    } catch (e) {
+      return res.status(400).json({ erro: "Formato JSON inválido no corpo da requisição." });
+    }
+  }
+
+  const { nome, curso } = body || {};
 
   if (!nome || !curso) {
     return res.status(400).json({ erro: "Campos 'nome' e 'curso' são obrigatórios." });
@@ -66,14 +78,10 @@ app.post('/api/alunos', (req, res) => {
   res.status(201).json({ mensagem: "Aluno cadastrado com sucesso!", aluno: novoAluno });
 });
 
-// Inicialização do servidor
+// Inicialização local
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
 
-// No final do server.js (mantendo o app.listen para desenvolvimento local)
-app.listen(PORT, () => {
-  console.log(`Servidor a rodar na porta ${PORT}`);
-});
-
+// Exportação para suporte às funções Serverless do Vercel
 module.exports = app;
